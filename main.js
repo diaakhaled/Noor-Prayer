@@ -567,7 +567,7 @@ function getLocation() {
   if (!navigator.geolocation) {
     messageP.textContent =
       "اختار المدينة أو اعطي سماحية للموقع للحصول على موقعك";
-    messageP.style.display = "block";
+    messageP.style.cssText = "display: flex; justify-content: center;";
     timesSection.style.display = "none";
     return;
   }
@@ -581,7 +581,7 @@ function getLocation() {
     () => {
       messageP.textContent =
         "اختار المدينة أو اعطي سماحية للموقع للحصول على موقعك";
-      messageP.style.display = "block";
+      messageP.style.cssText = "display: flex; justify-content: center;";
       timesSection.style.display = "none";
     },
   );
