@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&display=swap");
+:root {
+  --main-color: #d4af37;
+}
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.active{ 
+  background-color: #D4AF37 !important;
+  border: none !important;
+  box-shadow: 0 0 10px var(--main-color) !important;
+}
+.active *{ 
+  color: #000 !important;
+}
+ul{
+  scrollbar-width: auto;
+  max-height: 100px;
+}
