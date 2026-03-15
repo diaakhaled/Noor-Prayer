@@ -15,6 +15,7 @@ const prayerBoxes = document.querySelectorAll(".prayer-time");
 const remainSpan = document.querySelector(".time-remains span");
 
 let timingsData = null;
+let countdownInterval = null;
 
 //! Convert To 12h
 function formatTime(time) {
@@ -31,17 +32,24 @@ function timeToMinutes(time) {
 
 //! Get Location
 function getLocation() {
-  if (!navigator.geolocation) return;
-  navigator.geolocation.getCurrentPosition((pos) => {
-    let lat = pos.coords.latitude;
-    let lon = pos.coords.longitude;
-    getPrayerTimes(lat, lon);
-    cityAndCountry(lat, lon);
-  });
+  if (!navigator.geolocation) return handleLocationDenied();
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      let lat = pos.coords.latitude;
+      let lon = pos.coords.longitude;
+      getPrayerTimes(lat, lon, true);
+      cityAndCountry(lat, lon);
+    },
+    (error) => {
+      document.querySelector("section:nth-child(2)").innerHTML =
+        `<p class="chose-city">اختار المدينة أو اعطي سماحية للموقع للحصول على موقعك</p>`;
+      document.querySelector("section:nth-child(2)").style.display = "block";
+    },
+  );
 }
 
 //! Fetch Prayer Times
-function getPrayerTimes(lat, lon) {
+function getPrayerTimes(lat, lon, fromLocation = false) {
   fetch(
     `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=5`,
   )
@@ -51,11 +59,17 @@ function getPrayerTimes(lat, lon) {
       updatePrayerTimes();
       detectNextPrayer();
       startCountdown();
-      setInterval(detectNextPrayer, 60000);
+
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        detectNextPrayer();
+        startCountdown();
+      }, 1000);
     })
     .catch(() => {
       document.querySelector("section:nth-child(2)").innerHTML =
-        "اختار المدينة او اعطي سماحية للموقع للحصول علي موقعك لعرض مواقيت الصلاة";
+        `<p class="chose-city">حاول مرة أخرى</p>`;
+      document.querySelector("section:nth-child(2)").style.display = "block";
     });
 }
 
@@ -72,9 +86,9 @@ function detectNextPrayer() {
   let now = new Date();
   let nowMinutes = now.getHours() * 60 + now.getMinutes();
   prayerBoxes.forEach((el) => el.classList.remove("active"));
+
   for (let i = 0; i < prayerIds.length; i++) {
-    let prayerTime = timingsData[prayerIds[i]];
-    let prayerMinutes = timeToMinutes(prayerTime);
+    let prayerMinutes = timeToMinutes(timingsData[prayerIds[i]]);
     if (nowMinutes < prayerMinutes) {
       document.getElementById("next").textContent = prayerNames[i];
       prayerBoxes[i].classList.add("active");
@@ -82,19 +96,20 @@ function detectNextPrayer() {
     }
   }
 
-  //! لو انتهى اليوم
+  // لو انتهى اليوم
   document.getElementById("next").textContent = "الفجر";
   prayerBoxes[0].classList.add("active");
 }
 
 //! Countdown to next prayer
 function startCountdown() {
-  setInterval(() => {
-    if (!timingsData) return;
+  if (!timingsData) return;
+  countdownInterval = setInterval(() => {
     let now = new Date();
     let currentSeconds =
       now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
     let nextPrayerSeconds = null;
+
     for (let i = 0; i < prayerIds.length; i++) {
       let [h, m] = timingsData[prayerIds[i]].split(":").map(Number);
       let prayerSeconds = h * 3600 + m * 60;
@@ -103,18 +118,25 @@ function startCountdown() {
         break;
       }
     }
+
     if (nextPrayerSeconds === null) {
       let [h, m] = timingsData["Fajr"].split(":").map(Number);
       nextPrayerSeconds = h * 3600 + m * 60 + 86400;
     }
+
     let diff = nextPrayerSeconds - currentSeconds;
-    let hours = Math.floor(diff / 3600);
-    let minutes = Math.floor((diff % 3600) / 60);
-    let seconds = diff % 60;
-    minutes = minutes.toString().padStart(2, "0");
-    seconds = seconds.toString().padStart(2, "0");
-    hours = hours.toString().padStart(2, "0");
+    if (diff < 0) diff += 86400;
+
+    let hours = Math.floor(diff / 3600)
+      .toString()
+      .padStart(2, "0");
+    let minutes = Math.floor((diff % 3600) / 60)
+      .toString()
+      .padStart(2, "0");
+    let seconds = (diff % 60).toString().padStart(2, "0");
+
     remainSpan.textContent = `${seconds} : ${minutes} : ${hours}`;
+
     if (diff <= 600) {
       remainSpan.style.color = "red";
       remainSpan.style.fontWeight = "bold";
@@ -128,32 +150,34 @@ function startCountdown() {
 //! Hijri + Gregorian Date
 function updateDates() {
   let today = new Date();
-  const hijri = document.getElementById("hijri-date");
-  const gregorian = document.getElementById("gregorian-date");
-  hijri.textContent = new Intl.DateTimeFormat("ar-SA-u-ca-islamic-nu-arab", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(today);
-  gregorian.textContent = new Intl.DateTimeFormat("ar-EG-u-nu-arab", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(today);
+  document.getElementById("hijri-date").textContent = new Intl.DateTimeFormat(
+    "ar-SA-u-ca-islamic-nu-arab",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    },
+  ).format(today);
+
+  document.getElementById("gregorian-date").textContent =
+    new Intl.DateTimeFormat("ar-EG-u-nu-arab", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(today);
 }
+
 //! Clock
 function startClock() {
   setInterval(() => {
     let now = new Date();
     let hours = now.getHours();
-    let minutes = now.getMinutes();
-    let seconds = now.getSeconds();
-    let period = hours >= 12 ? "مساءً" : "صياحاً";
+    let minutes = now.getMinutes().toString().padStart(2, "0");
+    let seconds = now.getSeconds().toString().padStart(2, "0");
+    let period = hours >= 12 ? "مساءً" : "صباحاً";
     hours = hours > 12 ? hours - 12 : hours;
     hours = hours.toString().padStart(2, "0");
-    minutes = minutes.toString().padStart(2, "0");
-    seconds = seconds.toString().padStart(2, "0");
     document.getElementById("time-now").innerHTML =
       `${seconds} : ${minutes} : ${hours} <span>${period}</span>`;
   }, 1000);
@@ -189,14 +213,35 @@ const governorates = [
   "أسوان",
 ];
 
+const governoratesLocation = {
+  الإسكندرية: { lat: 31.2001, lon: 29.9187 },
+  البحيرة: { lat: 30.8481, lon: 30.3436 },
+  "كفر الشيخ": { lat: 31.1107, lon: 30.9398 },
+  الدقهلية: { lat: 31.0409, lon: 31.3785 },
+  الغربية: { lat: 30.8754, lon: 31.0335 },
+  المنوفية: { lat: 30.5972, lon: 30.9876 },
+  الشرقية: { lat: 30.7326, lon: 31.7195 },
+  دمياط: { lat: 31.4165, lon: 31.8133 },
+  القاهرة: { lat: 30.0444, lon: 31.2357 },
+  الجيزة: { lat: 30.0131, lon: 31.2089 },
+  القليوبية: { lat: 30.3292, lon: 31.2165 },
+  بورسعيد: { lat: 31.2653, lon: 32.3019 },
+  الإسماعيلية: { lat: 30.5965, lon: 32.2715 },
+  السويس: { lat: 29.9668, lon: 32.5498 },
+  الفيوم: { lat: 29.3084, lon: 30.8428 },
+  "بني سويف": { lat: 29.0661, lon: 31.0994 },
+  المنيا: { lat: 28.1099, lon: 30.7503 },
+  أسيوط: { lat: 27.1809, lon: 31.1837 },
+  سوهاج: { lat: 26.5591, lon: 31.6957 },
+  قنا: { lat: 26.1551, lon: 32.716 },
+  الأقصر: { lat: 25.6872, lon: 32.6396 },
+  أسوان: { lat: 24.0889, lon: 32.8998 },
+};
+
 //! Render Governorates
 function renderGovernorates() {
   governorates.forEach((gov) => {
-    menu.innerHTML += `
-    <li class="p-2 hover:bg-gray-200 cursor-pointer">
-      ${gov}
-    </li>
-    `;
+    menu.innerHTML += `<li class="p-2 hover:bg-gray-200 cursor-pointer">${gov}</li>`;
   });
 }
 
@@ -209,9 +254,16 @@ btn.onclick = () => {
 //! Select Governorate
 menu.addEventListener("click", (e) => {
   if (e.target.tagName === "LI") {
-    btn.childNodes[0].nodeValue = e.target.textContent;
+    let selectedGov = e.target.textContent.trim();
+    btn.childNodes[0].nodeValue = selectedGov;
     menu.classList.add("hidden");
     arrow.classList.remove("rotate-180");
+    let coords = governoratesLocation[selectedGov];
+    getPrayerTimes(coords.lat, coords.lon);
+    document.getElementById("governorate").textContent = `${selectedGov} - `;
+    document.getElementById("country").textContent = "مصر";
+    detectNextPrayer();
+    startCountdown();
   }
 });
 
@@ -228,15 +280,19 @@ getLocation();
 updateDates();
 startClock();
 renderGovernorates();
+
 //! Get City And Country From Location
-async function cityAndCountry(lat, lng) {
-  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
-    .then((response) => response.json())
+function cityAndCountry(lat, lng) {
+  fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+  )
+    .then((res) => res.json())
     .then((data) => {
-      const address = data.address;
-      const country = address.country || "غير معروف";
-      let governorate = address.state || address.province || address.governorate;
-      document.getElementById("governorate").innerHTML = ` ${governorate} - `
-      document.getElementById("country").innerHTML =  country
+      const addr = data.address;
+      const country = addr.country || "غير معروف";
+      const state =
+        addr.state || addr.province || addr.governorate || "غير معروف";
+      document.getElementById("governorate").textContent = `${state} - `;
+      document.getElementById("country").textContent = country;
     });
 }

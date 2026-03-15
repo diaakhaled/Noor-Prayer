@@ -22,3 +22,7 @@ ul{
   scrollbar-width: auto;
   max-height: 100px;
 }
+section:nth-child(2) .chose-city{
+  color: var(--main-color);
+  width: 100%;
+}
