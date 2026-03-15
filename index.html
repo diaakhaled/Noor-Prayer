@@ -25,8 +25,7 @@
         <div class="flex-1">
           <div class="city text-[var(--main-color)]">
             <i class="fa-solid fa-location-dot"></i>
-            <span id="governorate"></span>
-            <span id="country"></span>
+            <span id="governorate"></span> <span id="country"></span>
           </div>
           <div
             class="text-6xl text-white mt-2 font-light font-extralight [&_span]:text-[var(--main-color)]"
@@ -84,38 +83,42 @@
           </div>
         </div>
       </section>
-      <section
-        class="mt-12 [&_i]:text-[var(--main-color)] [&_i]:text-3xl [&_h4]:text-gray-500 [&_h4]:my-1.5 [&_p]:text-white [&_p]:text-3xl [&_div]:p-6 [&_div]:rounded-2xl [&_div]:border [&_div]:border-gray-600 [&_div]:bg-[#efefef0c] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 text-center gap-2"
-      >
-        <div class="prayer-time">
-          <i class="fa-regular fa-alarm-clock"></i>
-          <h4 class="name">الفجر</h4>
-          <p id="fajr"></p>
-        </div>
-        <div class="prayer-time">
-          <i class="fa-solid fa-sun"></i>
-          <h4 class="name">الشروق</h4>
-          <p id="sunrise"></p>
-        </div>
-        <div class="prayer-time">
-          <i class="fa-solid fa-temperature-high"></i>
-          <h4 class="name">الظهر</h4>
-          <p id="dhuhr"></p>
-        </div>
-        <div class="prayer-time">
-          <i class="fa-solid fa-cloud-sun"></i>
-          <h4 class="name">العصر</h4>
-          <p id="asr"></p>
-        </div>
-        <div class="prayer-time">
-          <i class="fa-solid fa-cloud-moon"></i>
-          <h4 class="name">المغرب</h4>
-          <p id="maghrib"></p>
-        </div>
-        <div class="prayer-time">
-          <i class="fa-regular fa-moon"></i>
-          <h4 class="name">العشاء</h4>
-          <p id="isha"></p>
+      <section>
+        <p class="hidden text-[var(--main-color)] w-full"></p>
+        <div
+          id="prayer-times-grid"
+          class="mt-12 [&_i]:text-[var(--main-color)] [&_i]:text-3xl [&_h4]:text-gray-500 [&_h4]:my-1.5 [&_p]:text-white [&_p]:text-3xl [&_div]:p-6 [&_div]:rounded-2xl [&_div]:border [&_div]:border-gray-600 [&_div]:bg-[#efefef0c] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 text-center gap-2"
+        >
+          <div class="prayer-time">
+            <i class="fa-regular fa-alarm-clock"></i>
+            <h4 class="name">الفجر</h4>
+            <p id="fajr"></p>
+          </div>
+          <div class="prayer-time">
+            <i class="fa-solid fa-sun"></i>
+            <h4 class="name">الشروق</h4>
+            <p id="sunrise"></p>
+          </div>
+          <div class="prayer-time">
+            <i class="fa-solid fa-temperature-high"></i>
+            <h4 class="name">الظهر</h4>
+            <p id="dhuhr"></p>
+          </div>
+          <div class="prayer-time">
+            <i class="fa-solid fa-cloud-sun"></i>
+            <h4 class="name">العصر</h4>
+            <p id="asr"></p>
+          </div>
+          <div class="prayer-time">
+            <i class="fa-solid fa-cloud-moon"></i>
+            <h4 class="name">المغرب</h4>
+            <p id="maghrib"></p>
+          </div>
+          <div class="prayer-time">
+            <i class="fa-regular fa-moon"></i>
+            <h4 class="name">العشاء</h4>
+            <p id="isha"></p>
+          </div>
         </div>
       </section>
     </div>
