@@ -36,6 +36,7 @@ function getLocation() {
     let lat = pos.coords.latitude;
     let lon = pos.coords.longitude;
     getPrayerTimes(lat, lon);
+    cityAndCountry(lat, lon);
   });
 }
 
@@ -50,12 +51,11 @@ function getPrayerTimes(lat, lon) {
       updatePrayerTimes();
       detectNextPrayer();
       startCountdown();
-      //! تحديث الصلاة القادمة كل دقيقة
       setInterval(detectNextPrayer, 60000);
     })
     .catch(() => {
       document.querySelector("section:nth-child(2)").innerHTML =
-        "اختار المدينة او اعطي سماحية للموقع لعرض مواقيت الصلاة";
+        "اختار المدينة او اعطي سماحية للموقع للحصول علي موقعك لعرض مواقيت الصلاة";
     });
 }
 
@@ -105,7 +105,7 @@ function startCountdown() {
     }
     if (nextPrayerSeconds === null) {
       let [h, m] = timingsData["Fajr"].split(":").map(Number);
-      nextPrayerSeconds = h * 3600 + m * 60 + 86400; // إضافة 24 ساعة
+      nextPrayerSeconds = h * 3600 + m * 60 + 86400;
     }
     let diff = nextPrayerSeconds - currentSeconds;
     let hours = Math.floor(diff / 3600);
@@ -149,11 +149,11 @@ function startClock() {
     let hours = now.getHours();
     let minutes = now.getMinutes();
     let seconds = now.getSeconds();
+    let period = hours >= 12 ? "مساءً" : "صياحاً";
     hours = hours > 12 ? hours - 12 : hours;
     hours = hours.toString().padStart(2, "0");
     minutes = minutes.toString().padStart(2, "0");
     seconds = seconds.toString().padStart(2, "0");
-    let period = hours >= 12 ? "مساءا" : "صباحا";
     document.getElementById("time-now").innerHTML =
       `${seconds} : ${minutes} : ${hours} <span>${period}</span>`;
   }, 1000);
@@ -228,3 +228,15 @@ getLocation();
 updateDates();
 startClock();
 renderGovernorates();
+//! Get City And Country From Location
+async function cityAndCountry(lat, lng) {
+  fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+    .then((response) => response.json())
+    .then((data) => {
+      const address = data.address;
+      const country = address.country || "غير معروف";
+      let governorate = address.state || address.province || address.governorate;
+      document.getElementById("governorate").innerHTML = ` ${governorate} - `
+      document.getElementById("country").innerHTML =  country
+    });
+}
