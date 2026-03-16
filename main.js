@@ -38,21 +38,70 @@ function restoreTimesGrid() {
   messageP.style.display = "none";
 }
 
-//! Fetch Prayer Times from coordinates
+//! Fetch Prayer Times from coordinates with method detection
 function fetchPrayerTimes(lat, lon) {
   fetch(
-    `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=5`,
+    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`,
   )
     .then((res) => res.json())
     .then((data) => {
-      timingsData = data.data.timings;
-      updatePrayerTimes();
-      detectNextPrayer();
-      startCountdown();
-      restoreTimesGrid();
+      const addr = data.address;
+      const country = addr.country || "غير معروف";
+      const methods = {
+        Egypt: 5,
+        "Saudi Arabia": 4,
+        "United Arab Emirates": 4,
+        Kuwait: 4,
+        Qatar: 4,
+        Bahrain: 4,
+        Oman: 4,
+        Yemen: 4,
+        Algeria: 3,
+        Morocco: 3,
+        Tunisia: 3,
+        Libya: 3,
+        Sudan: 5,
+        Somalia: 4,
+        Djibouti: 4,
+        Comoros: 4,
+        Jordan: 4,
+        Palestine: 4,
+        Lebanon: 4,
+        Syria: 4,
+        Iraq: 4,
+        Mauritania: 3,
+      };
+      let method = methods[country] || 2;
+      if (country === "غير معروف") {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        if (timezone.includes("Cairo")) method = 5;
+        else if (timezone.includes("Riyadh")) method = 4;
+        else if (timezone.includes("Algiers")) method = 3;
+        else method = 2;
+      }
+      fetch(
+        `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=${method}`,
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          timingsData = data.data.timings;
+          updatePrayerTimes();
+          detectNextPrayer();
+          startCountdown();
+          restoreTimesGrid();
+          const state =
+            addr.state || addr.province || addr.governorate || "غير معروف";
+          document.getElementById("governorate").textContent = `${state} - `;
+          document.getElementById("country").textContent = country;
+        })
+        .catch(() => {
+          messageP.textContent = "حصل خطأ أثناء جلب المواقيت";
+          messageP.style.display = "block";
+          timesSection.style.display = "none";
+        });
     })
     .catch(() => {
-      messageP.textContent = "حصل خطأ أثناء جلب المواقيت";
+      messageP.textContent = "فشل في تحديد الموقع";
       messageP.style.display = "block";
       timesSection.style.display = "none";
     });
